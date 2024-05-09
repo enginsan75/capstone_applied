@@ -1,3 +1,4 @@
-In this repository you will find some code samples written in python-files with ipyn extensions (SpaceX project, data science application, IBM) and my dashboard sample written by using R, R Shiny, html, python (data collection and wrangling), SQL and deployed to web. In the file "R Shiny Dashboard", there is a web link of the dash and login information to enter the dash. If you have difficulty to use it, you can watch the video. 
-Please contact me if you are interested in the codes for the dashboard.
+In this repository you will find my code samples written in python- the files with ipyn extensions (SpaceX project, data science application, IBM) and my demo dashboard written by using R, R Shiny, html, python (data collection and wrangling) and SQL. It has been deployed to the web and thus please just copy the link provided in "R Shiny Dashboard" file and enter the dashboard with login information provided in the file. Moreover, If you have difficulty how to use the dash, you should watch the video from the link in the file. 
+Please contact me if you want to see my codes used in production of the dashboard.
+
 email: mavericfb@gmail.com
