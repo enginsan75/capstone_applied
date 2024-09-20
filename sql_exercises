@@ -1,0 +1,498 @@
+CREATE DATABASE mydb;
+USE mydb;
+
+CREATE TABLE mytable (
+id int unsigned NOT NULL auto_increment,
+username varchar(100) NOT NULL,
+email varchar(100) NOT NULL,
+PRIMARY KEY (id)
+);
+
+INSERT INTO mytable ( username, email ) VALUES ( "myuser", "myuser@example.com" );
+
+
+UPDATE mytable SET username="myuser" WHERE id=8;
+
+
+DELETE FROM mytable WHERE id=8;
+
+
+SELECT * FROM mytable WHERE username = "myuser";
+
+
+SELECT * FROM mytable WHERE username = "username";
+
+
+
+SHOW databases;
+
+SHOW tables;
+
+DESCRIBE mytable;
+
+##Generally, you should try to avoid using column or table names containing spaces or using reserved words in SQL. 
+##For example, it's best to avoid names like "table" or "first name".
+##If you must use such names, put them between back-tick `` delimiters. 
+##For example:
+CREATE TABLE `table` (
+`first name` VARCHAR(30) );
+
+SELECT `first name` FROM `table` WHERE `first name` LIKE 'a%';
+
+SELECT ID, USER, HOST, DB, COMMAND, TIME as time_seconds,
+ROUND(TIME / 60, 2) as time_minutes, ROUND(TIME / 60 / 60, 2) as time_hours, STATE, INFO
+FROM information_schema.PROCESSLIST ORDER BY INFO DESC, TIME DESC;
+
+SELECT * FROM information_schema.ROUTINES WHERE ROUTINE_DEFINITION LIKE '%word%';
+
+
+#Data Types:
+ 
+CHAR(n) is a string of a fixed length of n characters. If it is CHARACTER SET utf8mb4, 
+that means it occupies exactly 4*n bytes, regardless of what text is in it.
+Most use cases for CHAR(n) involve strings that contain English characters, hence should be CHARACTER SET ascii. 
+(latin1 will do just as good.)
+
+country_code CHAR(2) CHARACTER SET ascii,
+postal_code CHAR(6) CHARACTER SET ascii,
+uuid CHAR(39) CHARACTER SET ascii
+
+
+city VARCHAR(100) -- This Russian town needs 91:
+Poselok Uchebnogo Khozyaystva Srednego Professionalno-Tekhnicheskoye Uchilishche Nomer Odin
+country VARCHAR(50) -- probably enough
+name VARCHAR(64) -- probably adequate; more than some government agencies allow
+
+Why not simply 255? There are two reasons to avoid the common practice of using (255) for everything.
+When a complex SELECT needs to create temporary table (for a subquery, UNION, GROUP BY, etc), the preferred choice is to use 
+the MEMORY engine, 
+which puts the data in RAM. But VARCHARs are turned into CHAR in the process. This makes VARCHAR(255) CHARACTER SET utf8mb4 
+take 1020 bytes. That can lead to needing to spill to disk, which is slower.
+In certain situations, InnoDB will look at the potential size of the columns in a table and decide that it will be 
+too big, aborting a CREATE TABLE.
+
+VARCHAR versus TEXT:
+
+Usage hints for *TEXT, CHAR, and VARCHAR, plus some Best Practice:
+Never use TINYTEXT.
+Almost never use CHAR -- it is fixed length; each character is the max length of the CHARACTER bytes/character for utf8mb4).
+With CHAR, use CHARACTER SET ascii unless you know otherwise.
+VARCHAR(n) will truncate at n characters; TEXT will truncate at some number of bytes. (But, do you want truncation?)
+TEXT may slow down complex SELECTs due to how temp tables are handled.
+
+
+Implicit / automatic casting:
+
+select '123' * 2;
+#mupltiply string '123' with 2 gives an numneric, automatically convert string to numeric
+
+select '123ABC' * 2
+#it gives 246
+
+select 'ABC12' * 2
+
+Integer Types: INTEGER, INT, SMALLINT, TINYINT, MEDIUMINT, BIGINT
+Fixed Point Types DECIMAL, NUMERIC
+Floating Point Types FLOAT, DOUBLE
+Bit Value Type BIT
+
+
+
+
+#SELECT:
+
+
+#The DISTINCT clause after SELECT eliminates duplicate rows from the result set.
+CREATE TABLE `car`
+( `car_id` INT UNSIGNED NOT NULL PRIMARY KEY,
+`name` VARCHAR(20),
+`price` DECIMAL(8,2) );
+
+INSERT INTO CAR (`car_id`, `name`, `price`) VALUES (1, 'Audi A1', '20000'); INSERT INTO CAR (`car_id`, `name`, `price`) VALUES (2, 'Audi A1', '15000'); INSERT INTO CAR (`car_id`, `name`, `price`) VALUES (3, 'Audi A2', '40000'); INSERT INTO CAR (`car_id`, `name`, `price`) VALUES (4, 'Audi A2', '40000');
+
+SELECT DISTINCT `name`, `price` FROM CAR;
+
+
+
+CREATE TABLE stack( id INT,
+username VARCHAR(30) NOT NULL,
+password VARCHAR(30) NOT NULL );
+
+INSERT INTO stack (`id`, `username`, `password`) VALUES (1, 'Foo', 'hiddenGem'); 
+INSERT INTO stack (`id`, `username`, `password`) VALUES (2, 'Baa', 'verySecret');
+
+
+SELECT id FROM stack;
+
+SELECT * FROM stack WHERE username LIKE "%oo%"; #ANYWHERE OO
+
+SELECT * FROM stack WHERE username LIKE "B%"; #STARTS WITH B
+
+
+SELECT * FROM stack WHERE username LIKE "%a"; #END WITH A
+
+
+INSERT INTO stack (`id`, `username`, `password`) VALUES (3, 'admin', 'mypass');
+
+
+SELECT * FROM stack WHERE username LIKE "adm_n"; #the _ character matches just one character.
+
+DROP TABLE students;
+
+CREATE TABLE students( id INT,
+studentname VARCHAR(30) NOT NULL,
+percentage FLOAT(10) NOT NULL,
+Remark VARCHAR(30) NOT NULL );
+
+INSERT INTO students (`id`, `studentname`, `percentage`, `Remark`) VALUES (1, 'Isha', 67, 'Pass'); 
+
+INSERT INTO students (`id`, `studentname`, `percentage`, `Remark`) VALUES (2, 'Michel', 56, 'Fail'); 
+
+INSERT INTO students (`id`, `studentname`, `percentage`, `Remark`) VALUES (3, 'John', 76, 'Pass'); 
+
+INSERT INTO students (`id`, `studentname`, `percentage`, `Remark`) VALUES (4, 'Ishemal', 47, 'Fail'); 
+
+
+#SELECT with CASE or IF:
+
+SELECT st.studentname, st.percentage,
+CASE WHEN st.percentage >= 35 THEN 'Pass' ELSE 'Fail' END AS `Remark` 
+FROM students AS st ;
+
+SELECT st.studentname, st.percentage,
+IF(st.percentage >= 35, 'Pass', 'Fail') AS `Result` FROM students AS st ;
+
+#SELECT with Alias (AS):
+
+SELECT username AS val FROM stack;
+
+
+#SELECT with a LIMIT clause:
+
+USE NORTHWIND;
+
+SELECT *
+FROM Customers
+ORDER BY CustomerID LIMIT 3;
+
+SELECT *
+FROM Customers
+ORDER BY CustomerID LIMIT 2,1;
+
+#When a LIMIT clause contains two numbers, it is interpreted as LIMIT offset,count. So, it skips two records and returns one.
+
+SELECT * FROM Customers WHERE CustomerID BETWEEN 'ALFKI' and 'BLAUS';
+
+
+#Query with a nested SELECT in the WHERE clause:
+
+SELECT CompanyName FROM Customers 
+WHERE CustomerID IN (SELECT CustomerID FROM Customers WHERE CustomerID BETWEEN 'ALFKI' and 'BLAUS');
+
+
+
+SELECT CompanyName FROM Customers 
+WHERE CustomerID = (SELECT CustomerID FROM Customers WHERE CustomerID LIKE 'ALF%');
+
+#it retrieves a single value...
+
+#SELECET NULL VALUES: IS NULL IS NOT NULL:
+SELECT * FROM Customers WHERE Region IS NOT NULL
+LIMIT 10;
+
+SELECT * FROM Customers WHERE Region IS NULL
+LIMIT 10;
+
+#USING VARIABLES:
+
+#Sometimes, you want to pass a value from an SQL statement to another SQL statement. 
+#To do this, you store the value in a MySQL user-defined variable in the first statement and 
+#refer to it in the subsequent statements.
+
+#To create a user-defined variable, you use the format @variable_name, where the variable_name consists 
+#of alphanumeric characters. The maximum length of the user-defined variable is 64 characters as of MySQL 5.7.5
+
+#The user-defined variables are not case-sensitive. It means that the @id and @ID are the same.
+
+#You can assign the user-defined variable to a certain data types such as integer, floating point, decimal, 
+#string or NULL.
+
+#A user-defined variable defined by one client is not visible by other clients. In other words, an user-defined 
+#variable is session-specific.
+
+#Note that the user-defined variables are the MySQL-specific extension to SQL standard. 
+#They may not be available in other database systems.
+
+
+#MySQL variable assignment:
+There are two ways to assign a value to a user-defined variable.
+
+The first way is to use the SET statement as follows:
+
+SET @counter := 100;
+
+The second way is to use SELECT statement :
+
+SElECT @counter := 100;
+
+
+#EXAMPLES:
+SELECT 
+    @max_price:=MAX(UnitPrice)
+FROM
+    Products;
+
+
+The following statement uses the @max_price variable to query the information of the most expensive product.
+
+SELECT 
+    *
+FROM
+    Products
+WHERE
+    UnitPrice  = @max_price;
+
+
+#A user-defined variable can hold a single value only. If the SELECT statement returns multiple values, 
+#the variable will take the value of the last row in the result.
+
+SELECT 
+    @unit_order:= UnitsOnOrder
+FROM
+    Products
+WHERE
+    UnitsOnOrder >30
+ORDER BY  UnitsOnOrder;
+
+#the last row was 100, so check it:
+
+SELECT @unit_order;
+
+
+
+
+#ROW NUMBER and GROUP BY using variables in Select Statement:
+
+SET @row_no := 0;
+SELECT @row_no := @row_no + 1 AS 'row_number', UnitPrice, ProductName FROM Products;
+
+
+
+    SELECT ProductName,                                                                                                                            
+      @price_sum:=UnitPrice AS price_total                                                                                                                   
+      FROM Products                                                                                                                                   
+      GROUP BY ProductName, price_total;  
+
+    
+     
+#COMMENTING:
+
+/* This is an in-line comment */
+
+/*
+This is a
+multiple-line comment
+*/
+
+
+     
+#INSERT, DELETE AND UPDATE:
+use mydb;
+drop table iodku;
+CREATE TABLE iodku (
+id INT AUTO_INCREMENT NOT NULL, name VARCHAR(99) NOT NULL,
+misc INT NOT NULL,
+PRIMARY KEY(id),
+UNIQUE(name)
+) ENGINE=InnoDB;
+INSERT INTO iodku (name, misc) VALUES
+    ('Leslie', 123),
+    ('Sally', 456);
+
+INSERT INTO iodku (name, misc) VALUES
+('Sally', 3333)
+ON DUPLICATE KEY UPDATE id = LAST_INSERT_ID(id), misc = VALUES(misc);
+SELECT LAST_INSERT_ID();
+
+#ıd remained same, but it updated Sally row in name and misc columns
+
+INSERT INTO iodku (name, misc) VALUES
+('Dana', 789) -- new record
+ON DUPLICATE KEY UPDATE id = LAST_INSERT_ID(id), misc = VALUES(misc);
+SELECT LAST_INSERT_ID();
+   
+
+#DELETE:
+/*LOW_PRIORITY: If LOW_PRIORITY is provided, the delete will be delayed until there are no processes 
+ * reading from the table
+ 
+IGNORE: If IGNORE is provided, all errors encountered during the delete are ignored table The table from 
+which you are going to delete records
+
+WHERE conditions: The conditions that must be met for the records to be deleted. If no conditions are provided, 
+then all records from the table will be deleted
+
+ORDER BY: expression If ORDER BY is provided, records will be deleted in the given order
+LIMIT: It controls the maximum number of records to delete from the table. Given number_rows will be deleted.*/
+
+create table people
+( id int primary key,
+name varchar(100) not null,
+gender char(1) not null );
+insert people (id,name,gender) values (1,'Kathy','f'),(2,'John','m'),(3,'Paul','m'),(4,'Kim','f');
+
+create table pets
+( id int auto_increment primary key,
+ownerId int not null,
+name varchar(100) not null, color varchar(100) not null
+);
+
+insert pets(ownerId,name,color) values (1,'Rover','beige'),(2,'Bubbles','purple'),(3,'Spot','black and white'), (1,'Rover2','white');
+
+DELETE FROM `people` WHERE `name` = 'Kim'; -- it deletes one row on condition
+
+DELETE FROM people ; -- it clears all rows but table remains 
+
+#re insert values:
+insert people (id,name,gender) values (1,'Kathy','f'),(2,'John','m'),(3,'Paul','m'),(4,'Kim','f');
+
+DELETE FROM `people` WHERE `gender` = 'f'LIMIT 1; -- only one female will be deleted
+
+/*DELETE vs TRUNCATE
+
+TRUNCATE tableName;
+
+This will delete all the data and reset AUTO_INCREMENT index. It's much faster than DELETE FROM tableName on a
+huge dataset. It can be very useful during development/testing.
+When you truncate a table SQL server doesn't delete the data, it drops the table and recreates it, 
+thereby deallocating the pages 
+so there is a chance to recover the truncated data before the pages where overwritten. 
+(The space cannot immediately be recouped for innodb_file_per_table=OFF.)*/
+
+#MULTİ TABLE DELETING NESTED OR WITH JOIN:
+DELETE p2
+FROM pets p2
+WHERE p2.ownerId in (
+SELECT p1.id
+FROM people p1
+WHERE p1.name = 'Paul');
+
+#Deleted Paul's pet row in pet table..
+
+#0r
+DELETE p2 -- remove only rows from pets FROM people p1
+JOIN pets p2
+ON p2.ownerId = p1.id
+WHERE p1.name = 'Paul';
+
+
+#Basic Update:
+UPDATE people SET name='Kathy1' WHERE id=1;
+
+
+#Bulk UPDATE:
+UPDATE people SET name =
+(CASE id 
+WHEN 1 THEN 'Karl' 
+WHEN 2 THEN 'Tom'
+WHEN 3 THEN 'Mary' 
+END)
+WHERE id IN (1,2,3);
+
+
+#Multiple Table UPDATE:
+/*
+For example consider two tables, products and salesOrders. In case, we decrease the quantity of 
+a particular product from the sales order which is placed already. Then we also need to increase that 
+quantity in our stock column of products table. This can be done in single SQL update statement like below.
+
+
+UPDATE products, salesOrders
+SET salesOrders.Quantity = salesOrders.Quantity - 5,
+products.availableStock = products.availableStock + 5 WHERE products.productId = salesOrders.productId
+AND salesOrders.orderId = 100 AND salesOrders.productId = 20;
+
+In the above example, quantity '5' will be reduced from the salesOrders table and the same will be increased 
+in products table according to the WHERE conditions.*/
+
+
+
+#GROUP BY using HAVING:
+use northwind;
+
+SELECT Country, COUNT(*) AS "Country_Count" FROM Customers 
+GROUP BY Country
+HAVING COUNT(*) >= 3;
+
+#Using GROUP BY ... HAVING to filter aggregate records is analogous to using SELECT ... WHERE to filter individual records.
+#You could also say HAVING Man_Power >= 10 since HAVING understands "aliases".
+
+#Group By using Group Concat:
+Group Concat is used in MySQL to get concatenated values of expressions with more than one result per column. 
+Meaning, there are many rows to be selected back for one column
+
+SELECT Title, GROUP_CONCAT(City ORDER BY City desc) AS Cities FROM Employees 
+GROUP BY Title;
+
+#group by with min, max, sum, count, avg....
+
+SELECT City, MIN(salary) AS "Lowest salary" FROM Employees
+GROUP BY City;
+
+SELECT CustomerID, ShipCity, COUNT(*) as orders FROM Orders
+GROUP BY CustomerID, ShipCity 
+ORDER BY CustomerID;
+
+#NUMBER OF ORDERS GROUPED BY CUSTOMER ID and City
+
+SELECT ProductName, SUM(UnitsInStock) as stock_total, SUM(UnitsOnOrder) as order_total FROM Products 
+GROUP BY ProductName
+ORDER BY ProductName;
+
+
+
+
+
+#JOINS:
+
+use Northwind;
+#JOIN with subquery ("Derived" table):
+SELECT ...
+FROM ( SELECT y, ... FROM ... ) AS a 
+JOIN(SELECTx,...FROM...)AS b 
+ON b.x=a.y 
+WHERE ...
+
+
+/*#INNER JOIN: Returns records that have matching values in both tables
+#LEFT JOIN: Returns all records from the left table, and the matched records from the right table
+#RIGHT JOIN: Returns all records from the right table, and the matched records from the left table
+#CROSS JOIN: Returns all records from both tables*/
+
+
+SELECT Orders.OrderID, Customers.CompanyName 
+FROM Orders
+INNER JOIN Customers ON Orders.CustomerID = Customers.CustomerID;
+
+
+
+SELECT Orders.OrderID, Customers.CompanyName, Order_Details.UnitPrice 
+FROM ((Orders
+INNER JOIN Customers ON Orders.CustomerID = Customers.CustomerID)
+INNER JOIN Order_Details ON Orders.OrderID  = Order_Details.OrderID);
+
+
+SELECT Customers.CompanyName, Orders.OrderID
+FROM Customers
+LEFT JOIN Orders ON Customers.CustomerID = Orders.CustomerID
+ORDER BY Customers.CompanyName;
+
+/*The LEFT JOIN keyword returns all records from the left table (Customers), 
+#even if there are no matches in the right table (Orders).*/
+
+SELECT Orders.OrderID, Employees.LastName, Employees.FirstName
+FROM Orders
+RIGHT JOIN Employees ON Orders.EmployeeID = Employees.EmployeeID
+ORDER BY Orders.OrderID;
+
+

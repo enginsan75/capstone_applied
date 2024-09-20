@@ -1,0 +1,774 @@
+select * from dealerships d ;
+
+/*“Reading Tables: The SELECT Query”*
+ * 
+ */
+
+select first_name, state 
+from customers c 
+where state='AZ'
+order by first_name;
+
+select model from products p 
+where year =2014 and product_type ='automobile';
+
+select model from products p 
+where year =2014 or product_type ='automobile';
+
+/*one true is enough in or condition to retrieve,
+ * “When using more than one AND/OR condition, use parentheses to separate and position pieces of logic together”
+ * */
+
+SELECT * FROM products
+WHERE (year>2014 AND year<2016)
+or product_type='scooter';
+
+
+SELECT model, year
+			FROM products
+			WHERE year IN (2014, 2016, 2019);
+
+SELECT model, year
+			FROM products
+			WHERE year not IN (2014, 2016, 2019);
+
+SELECT *
+			FROM products
+			ORDER BY year DESC, base_msrp ASC;
+
+SELECT model
+			FROM products
+			ORDER BY production_start_date
+		limit 5;
+
+SELECT *
+			FROM products
+			WHERE production_end_date IS NOT null;
+
+SELECT *
+			FROM products
+			WHERE production_end_date IS null;
+
+		
+SELECT username FROM salespeople
+WHERE gender= 'Female'
+ORDER BY hire_date
+limit 10;
+
+/*activity3 excercises*/
+
+select email from customers c 
+where state = 'FL'
+order by email;
+
+select first_name, last_name, email from customers c 
+where state ='NY' and city ='New York City'
+order by first_name, last_name ;
+
+select * from customers c 
+where phone is not null 
+order by date_added ;
+
+
+
+/*Creating Tables*/
+drop table state_populations;
+
+CREATE TABLE state_populations 
+(state VARCHAR(2) PRIMARY KEY,
+ population NUMERIC
+);
+			
+drop table countries2;
+CREATE TABLE countries2 
+(key INT PRIMARY KEY,
+name text UNIQUE,
+founding_year INT,
+capital text);
+
+/*creating table from existing data from another table with select*/
+CREATE TABLE products_2014 AS (
+			SELECT *
+			FROM products
+			WHERE year=2014
+			);
+		
+
+/*UPDATING TABLES*/
+		
+ALTER TABLE products
+ADD COLUMN weight INT;
+
+ALTER TABLE products
+DROP COLUMN weight;
+
+INSERT INTO products 
+(product_id, model, year, product_type, base_msrp, 
+ production_start_date, production_end_date)
+VALUES (13, 'Nimbus 5000', 2019, 'scooter', 500.00, '2019-03-03', '2020-03-03');
+
+INSERT INTO products 
+(product_id, model, year, product_type, base_msrp, production_start_date, production_end_date, weight) 
+SELECT * FROM products
+WHERE year=2014;
+			
+/*row updating*/
+UPDATE products
+SET base_msrp = 299.99
+WHERE product_type = 'scooter'
+AND year<2018;
+			
+UPDATE products
+SET base_msrp = base_msrp*1.10
+WHERE model='Model Chi'and year=2019;
+
+/*Deleting Values from a Row*/
+
+UPDATE customers
+SET email = NULL
+WHERE customer_id=3;
+
+/*Deleting Rows from a Table*/
+
+delete from customers 
+where email='ariveles0@stumbleupon.com';
+
+
+/*ACTIVITY 4 EXCERCISES*/
+
+create table customer_nys as (
+select * from customers c 
+where state='NY' and city ='New York City');
+
+delete from customer_nys 
+where postal_code='10014';
+
+alter table customer_nys 
+add column event varchar(50);
+
+update customer_nys 
+set event = 'thank-you party'
+where state='NY';
+
+drop table customer_nys; 
+
+
+
+
+/*chapter 2
+ * Connecting Tables Using JOIN*/
+
+SELECT *
+FROM salespeople
+INNER JOIN dealerships
+ON salespeople.dealership_id = dealerships.dealership_id 
+ORDER BY 1;
+/*the left side all columns from salespeople table right side will be dealership. Super merged table*/
+
+SELECT *
+FROM salespeople
+INNER JOIN dealerships
+ON salespeople.dealership_id = dealerships.dealership_id
+WHERE dealerships.state = 'CA'
+ORDER BY 1;
+
+/* if we want to retrieve only salespeople table's all columns*/
+SELECT salespeople.*
+FROM salespeople
+INNER JOIN dealerships
+ON dealerships.dealership_id = salespeople.dealership_id
+WHERE dealerships.state = 'CA'
+ORDER BY 1;
+
+/*or using aliases as table names*/
+
+SELECT s.*
+FROM salespeople s
+INNER JOIN dealerships d
+ON d.dealership_id = s.dealership_id
+WHERE d.state = 'CA'
+ORDER BY 1;
+
+/*As discussed, inner joins will only return rows from the two tables, 
+ and only if the join predicate is met for both rows. Otherwise, no rows from either table are returned. 
+ Sometimes, however, we want to return all rows from one of the tables regardless of whether the join predicate is met. 
+ In this case, the join predicate is not met; the row for the second table will be returned as NULL. These joins, 
+ where at least one table will be represented in every row after the join operation, are known as outer joins.
+
+Outer joins can be classified into three categories: left outer joins, right outer joins, and full outer joins.
+Left outer joins are where the left table (that is, the table mentioned first in a join clause) 
+will have every row returned. If a row from the other table is not found, a row of NULL is returned. 
+Left outer joins are performed by using the LEFT OUTER JOIN keywords followed by a join predicate. 
+This can also be written in short as LEFT JOIN*/
+
+SELECT *
+FROM customers c
+LEFT OUTER JOIN emails e 
+ON e.customer_id=c.customer_id
+ORDER BY c.customer_id
+LIMIT 1000; 
+/*outer joined even retrieved null customers ids from email table
+ If the inner join was used, the customer_id column would not be blank*/
+
+/*lets check null customer ids by joinning*/
+SELECT *
+FROM customers c
+LEFT OUTER JOIN emails e 
+ON c.customer_id = e.customer_id 
+WHERE e.customer_id IS NULL
+ORDER BY c.customer_id
+LIMIT 1000;
+
+
+/*Finally, there is the full outer join. The full outer join will return all rows from the left and right tables, 
+regardless of whether the join predicate is matched. 
+For rows where the join predicate is met, the two rows are combined in a group. 
+For rows where they are not met, the row has NULL filled in*/
+
+SELECT * 
+FROM emails e
+FULL OUTER JOIN customers c
+ON e.customer_id=c.customer_id;
+
+
+/*CROSS JOIN
+The final type of join we will discuss in this book is the cross join. 
+The cross join is mathematically what is also referred to as the Cartesian product 
+– it returns every possible combination of rows from the "left" table and the "right" table
+In general, cross joins are not used in practice, and can also be very dangerous if you are not careful. 
+Cross joining two large tables together can lead to the origination of hundreds of billions of rows, 
+which can stall and crash a database. Take care when using them.*/
+			
+
+SELECT p1.product_id, p1.model, p2.product_id, p2.model
+FROM products p1 CROSS JOIN products p2
+order by 1;
+
+
+SELECT c.customer_id, c.first_name, c.last_name, c.phone
+FROM sales s
+INNER JOIN customers c 
+ON c.customer_id=s.customer_id
+INNER JOIN products p ON 
+p.product_id=s.product_id
+WHERE p.product_type='automobile'AND c.phone IS NOT null;
+
+
+
+/*SUBQUERIES*/
+
+/*referencing from a result of the subquery in paranthesis with alias and join tables*/
+
+SELECT *
+FROM salespeople
+INNER JOIN (
+SELECT * FROM dealerships
+WHERE dealerships.state = 'CA'
+) d
+ON d.dealership_id = salespeople.dealership_id
+ORDER BY 1;
+/*Here, instead of joining the two tables and then filtering for rows with the state equal to 'CA', 
+ we first find (by selecting) the dealerships where the state equals 'CA' and then inner join the rows in that query to salespeople*/
+
+SELECT *
+FROM salespeople
+WHERE dealership_id IN(
+SELECT dealership_id FROM dealerships
+WHERE dealerships.state = 'CA')
+ORDER BY 1;
+/*alternatively use WHERE IN in subqueries without join...*/
+
+
+
+/*UNIONS*/
+
+/*So far, we have been talking about how to join data horizontally. 
+That is, with joins, new columns are effectively added horizontally. 
+However, we may be interested in putting multiple queries together VERTICALLY; 
+that is, by keeping the same number of columns but adding multiple rows*/
+
+(SELECT street_address, city, state, postal_code
+FROM customers
+WHERE street_address IS NOT NULL
+			)
+union
+(SELECT street_address, city, state, postal_code
+FROM dealerships
+WHERE street_address IS NOT NULL)
+			ORDER BY 1;
+
+/*union is a rowbind in R*/
+		
+(SELECT first_name, last_name, 'Customer' as guest_type
+FROM customers
+WHERE city = 'Los Angeles' AND state = 'CA')
+union
+(SELECT first_name, last_name, 'Employee' as guest_type
+FROM salespeople s 
+INNER JOIN dealerships d ON 
+d.dealership_id = s.dealership_id
+WHERE d.city = 'Los Angeles' AND d.state = 'CA');
+
+
+/*Common Table Expressions*/
+/*WITH*/
+/*Common table expressions are, in a certain sense, just a different version of subqueries. 
+ Common table expressions establish temporary tables by using the WITH clause*/
+/*The one advantage of common table expressions is that they are recursive. 
+ Recursive common table expressions can reference themselves. Because of this feature, 
+ we can use them to solve problems that other queries cannot*/
+
+WITH d as (
+SELECT * FROM dealerships
+WHERE dealerships.state = 'CA'
+)
+SELECT *
+FROM salespeople
+INNER JOIN d ON d.dealership_id = salespeople.dealership_id
+ORDER BY 1;
+
+
+/*TRANSFORMING DATA*/
+
+/*Often, the raw data presented in a query output may not be in the form we would like it to be. 
+We may want to remove values, substitute values, or map values to other values. To accomplish these tasks, 
+SQL provides a wide variety of statements and functions. Functions are keywords that take in inputs 
+such as a column or a scalar value and change those inputs into some sort of output. 
+We will discuss some very useful functions for cleaning data in the following sections.*/
+
+/*CASE WHEN FUNCTION*/
+
+/*CASE WHEN is a function that allows a query to map various values in a column to other values. 
+ The general format of a CASE WHEN statement is:
+			CASE WHEN condition1 THEN value1
+			WHEN condition2 THEN value2
+			…
+			WHEN conditionX THEN valueX
+			ELSE else_value END
+			
+	Here, condition1 and condition2, through conditionX, are Boolean conditions; value1 and value2, through valueX, 
+	are values to map the Boolean conditions; and else_value is the value that is mapped if none of 
+	the Boolean conditions are met. For each row, the program starts at the top of the CASE WHEN statement 
+	and evaluates the first Boolean condition. The program then runs through each Boolean condition from the first one. 
+	For the first condition from the start of the statement that evaluates as true, the statement will return 
+	the value associated with that condition. If none of the statements evaluate as true, then the value associated 
+	with the ELSE statement will be returned.
+	As an example, let's say you wanted to return all rows for customers from the customers table. 
+	Additionally, you would like to add a column that labels a user as being an Elite Customer if they live in postal code 33111, 
+	or as a Premium Customer if they live in postal code 33124. 
+	Otherwise, it will mark the customer as a Standard Customer. This column will be called customer_type. 
+	We can create this table by using a CASE WHEN statement as follows: */
+
+SELECT c.customer_id, 
+CASE 
+	WHEN c.state in ('MA', 'NH', 'VT', 'ME', 'CT', 'RI') 
+    THEN 'New England'
+    WHEN c.state in ('GA', 'FL', 'MS', 'AL', 'LA', 'KY', 'VA', 'NC', 'SC', 'TN', 'VI', 'WV', 'AR') 
+    THEN 'Southeast'
+ELSE 'Other' END as region
+FROM customers c
+ORDER BY 1;
+
+
+
+SELECT *,
+CASE 
+	WHEN postal_code='33111' THEN 'Elite Customer' 
+	WHEN postal_code='33124' THEN 'Premium Customer' 
+	ELSE 'Standard Customer' END 
+AS customer_type
+FROM customers;
+
+
+
+/*COALESCE FUNCTION*/
+/*
+Another useful technique is to replace NULL values with a standard value. 
+This can be accomplished easily by means of the COALESCE function. 
+COALESCE allows you to list any number of columns and scalar values, and, 
+if the first value in the list is NULL, it will try to fill it in with the second value. 
+The COALESCE function will keep continuing down the list of values until it hits a non-NULL value. 
+If all values in the COALESCE function are NULL, then the function returns NULL.*/
+
+
+SELECT first_name, last_name,
+COALESCE(phone, 'NO PHONE') as phone
+FROM customers
+order by 1;
+			
+/*When dealing with creating default values and avoiding NULL, COALESCE will always be helpful.*/
+
+
+/*NULLIF FUNCTION*/
+
+/*NULLIF is, in a sense, the opposite of COALESCE. NULLIF is a two-value function and will return 
+ NULL if the first value equals the second value */
+
+SELECT customer_id,
+NULLIF(title, 'Honorable') as title,
+first_name,
+last_name,
+date_added
+FROM customers c
+ORDER BY 1;
+
+/*This made all mentions of 'Honorable' to Null from the title column*/
+
+
+
+/*
+LEAST/GREATEST FUNCTIONS
+
+Two functions that come in handy for data preparation are the LEAST and GREATEST functions. 
+Each function takes any number of values and returns the least or the greatest of the values, respectively*/
+
+select product_id,
+			model, 
+			year, 
+			product_type, 
+			LEAST(600.00, base_msrp) as base_msrp, 
+			production_start_date, 
+			production_end_date
+FROM products
+WHERE product_type='scooter'
+ORDER BY 1;
+
+/*least 500 means less than 500*/
+
+select product_id,
+			model, 
+			year, 
+			product_type, 
+			least (500.00, base_msrp) as base_msrp, 
+			production_start_date, 
+			production_end_date
+FROM products
+WHERE product_type='scooter'
+ORDER BY 1;
+
+/*Casting*/
+/*Another useful data transformation is to change the data type of a column within a query*/
+SELECT product_id,
+			model,
+			year::TEXT,
+			product_type,
+			base_msrp,
+			production_start_date,
+			production_end_date
+			FROM products;
+
+
+/*DISTINCT and DISTINCT ON */
+
+SELECT DISTINCT year
+			FROM products
+			ORDER BY 1;
+
+SELECT DISTINCT ON (first_name) *
+FROM salespeople
+ORDER BY first_name, hire_date;
+
+
+
+/*ACTIVITY 5, EXCERCISES : */
+
+SELECT c.*,
+p.*,
+COALESCE(s.dealership_id, -1),
+CASE 
+	WHEN p.base_msrp - s.sales_amount >500 THEN 1 
+	ELSE 0 END 
+	AS high_savings 
+FROM sales s
+INNER JOIN customers c ON 
+c.customer_id=s.customer_id
+INNER JOIN products p ON 
+p.product_id=s.product_id
+LEFT JOIN dealerships d ON 
+s.dealership_id = d.dealership_id;
+
+
+
+
+
+/*AGGREGATE FUNCTIONS FOR DATA ANALYSIS*/
+
+select COUNT(customer_id) from customers c ;
+
+/*count number of rows in non Null rows...*/
+
+/*the COUNT function works with a single column and counts how many non-NULL values it has. 
+However, if every single column has at least one NULL value, then it would be impossible 
+to determine how many rows there are. To get a count of the number of rows in that situation, 
+you could alternatively use the COUNT function with an asterisk, (*), to get the total count of rows:*/
+
+select count(*) from customers c; 
+
+/*distinct counting*/
+SELECT COUNT(DISTINCT state) FROM customers;
+
+SELECT COUNT(*) FROM customers 
+WHERE state='CA';
+
+SELECT COUNT(*)/2 FROM customers;
+
+SELECT SUM(base_msrp)::FLOAT/COUNT(*) AS avg_base_msrp 
+FROM products;
+
+SELECT SUM(base_msrp)/COUNT(*) AS avg_base_msrp 
+FROM products;
+
+select round(SUM(base_msrp)/COUNT(*), 1) 
+from products p ;
+/*rounding decimal in a query*/
+
+
+SELECT count(*) as tot_number, sum(base_msrp), MIN(base_msrp), 
+MAX(base_msrp), AVG(base_msrp), STDDEV(base_msrp)
+FROM products;
+
+/*GROUP BY */
+
+/* WE want to count the number of customers in each state by querying:*/
+			
+SELECT state, COUNT(*) 
+FROM customers 
+GROUP BY state;
+
+SELECT state, COUNT(*) 
+FROM customers
+GROUP BY 1
+order by state ASC ;
+
+/*USE ASC FOR A TO Z in strings*/
+
+/*total number of groups by subquery*/
+select count(*)
+from (SELECT state, COUNT(*) 
+FROM customers 
+GROUP by 1
+) as a ;
+
+
+SELECT state, COUNT(*) 
+FROM customers 
+GROUP BY state 
+ORDER BY COUNT(*) desc;
+
+/*ordered data [order by count(*)] by group numbers big to small*/
+
+/*You may also want to count only a subset of the data, such as the total number of male customers. 
+ To calculate the total number of male customers, you can use the following query:*/
+
+
+SELECT state, gender, COUNT(*) 
+FROM customers 
+where gender = 'M' 
+GROUP BY state, gender 
+ORDER BY state;
+
+SELECT state, gender, COUNT(*) 
+FROM customers 
+GROUP BY state, gender
+ORDER BY state, gender;
+
+/*stats for base_msrp for each product type*/
+SELECT product_type, MIN(base_msrp), MAX(base_msrp), AVG(base_msrp), STDDEV(base_msrp)
+FROM products
+GROUP BY 1
+order by 1;
+
+
+/*Grouping Sets*/
+
+/*Now, let's say you wanted to count the total number of customers you have in each state, 
+ while simultaneously, in the same aggregate functions, counting the total number of male and female customers 
+ you have in each state*/
+
+SELECT state, gender, COUNT(*)
+FROM customers
+GROUP BY GROUPING SETS (
+(state),
+(gender),
+(state, gender)
+			)
+ORDER BY 1, 2;
+
+/*FINDING MODE, MEDIAN, PERCENTILE */
+
+SELECT PERCENTILE_CONT(0.5) WITHIN GROUP 
+(ORDER BY base_msrp) AS median
+from products;
+
+SELECT MODE() WITHIN GROUP 
+(ORDER BY base_msrp) AS MODE
+from products;
+
+/* %1 percentile */
+SELECT PERCENTILE_CONT(0.1) WITHIN GROUP 
+(ORDER BY base_msrp) AS "%1percent"
+from products;
+
+
+/*HAVING: GROUP FILTERING */
+
+SELECT state, COUNT(*)
+FROM customers
+GROUP BY state
+HAVING COUNT(*)>=1000
+order by state;
+/* we retrieved states who have at least 1000 customers */
+
+SELECT SUM(CASE 
+	WHEN state IS NULL OR state IN ('') THEN 1 
+	ELSE 0 END)::FLOAT/COUNT(*) 
+	AS missing_state FROM customers;
+/* it gives percentage of missing data */
+
+
+select state, SUM(CASE 
+	WHEN state IS NULL OR state IN ('') THEN 1 
+	ELSE 0 END)::FLOAT/COUNT(*) 
+	AS missing_state
+	FROM customers
+group by state;
+
+/*Measuring Data Quality with Aggregates:
+One of the major themes you will find in data analytics is that analysis is fundamentally only useful 
+when there is a strong variation in data. A column where every value is exactly the same is not a particularly 
+useful column. To this end, it often makes sense to determine how many distinct values there are in a column. 
+To measure the number of distinct values in a column */
+
+/*let's verify that the customer_id column in customers is unique:*/
+
+SELECT COUNT (DISTINCT customer_id)=COUNT(*) 
+AS equal_ids
+FROM customers;
+
+select count(*) from customers c ;
+select count(distinct customer_id) from customers c ;
+
+
+(select count(*) from customers c )
+union all
+(select count(distinct customer_id) from customers c) ;
+
+select count(*) as "count1", count(distinct customer_id) as "count2"
+from customers c;
+
+/*ACTIVITY 6, EXCERCISE */
+
+select count(*) 
+from sales s; 
+
+select c.state, round(sum(sales_amount))
+from sales s
+inner join customers c 
+on c.customer_id = s.customer_id
+group by c.state
+order by state; 
+
+select dealership_id, count(*)
+from sales s
+where channel='dealership'
+group by dealership_id 
+order by 2 desc
+limit 5;
+
+SELECT channel, product_id, AVG(sales_amount)
+FROM sales
+GROUP BY GROUPING SETS (
+(channel),
+(product_id),
+(channel, product_id)
+			)
+ORDER BY 1, 2;
+
+
+/*Window Functions for Data Analysis*/
+/*RANKING, ROLLING AVERAGES ETC.*/
+
+/*there are times when you want to keep the individual rows as well as gaining a summarizing value. 
+ To do this, in this chapter, we will introduce a new set of functions named window functions, 
+ which can calculate aggregate statistics while keeping individual rows*/
+
+/*The following is the basic syntax of a window function:
+			SELECT {columns},
+			{window_func} OVER (PARTITION BY {partition_key} ORDER BY {order_key})
+			FROM table1;
+
+*/
+
+SELECT customer_id, title, first_name, last_name, gender,
+			COUNT(*) OVER (PARTITION BY gender) as total_customers
+			FROM customers
+			ORDER BY customer_id;
+/*Showed total number of females and total number of males in each row in table...*/
+
+SELECT customer_id, title, first_name, last_name, gender,
+			COUNT(*) OVER (PARTITION BY gender ORDER BY customer_id) as total_customers
+			FROM customers
+			ORDER BY customer_id;
+/*when you combine PARTITION BY and ORDER BY: “Like the previous query we ran, it appears to be some sort of rank. 
+ However, it seems to differ based on gender. What is this query doing? 
+ As discussed for the previous query, the query first divides the table into two subsets based on PARTITION BY. 
+ Each partition is then used as a basis for doing a count, with each partition having its own set of windows.*/
+
+SELECT customer_id, street_address, date_added::DATE,
+
+			COUNT(CASE WHEN street_address IS NOT NULL THEN customer_id ELSE NULL END
+
+) OVER (ORDER BY date_added::DATE) as total_customers_filled_street
+			FROM customers
+			ORDER BY date_added;
+
+
+SELECT *,
+RANK() OVER (PARTITION BY dealership_id ORDER BY hire_date)
+FROM salespeople
+WHERE termination_date IS NULL;
+
+
+/*7 DAY ROLLING AVERAGE: */
+
+WITH daily_sales as (
+			SELECT sales_transaction_date::DATE,
+			SUM(sales_amount) as total_sales
+			FROM sales
+			GROUP BY 1
+			),
+MA_7 AS (
+			SELECT sales_transaction_date, total_sales,
+			AVG(total_sales) OVER (ORDER BY sales_transaction_date ROWS BETWEEN 7 PRECEDING and CURRENT ROW) 
+			AS sales_moving_average_7,
+			ROW_NUMBER() OVER (ORDER BY sales_transaction_date) as row_number
+			FROM daily_sales
+			ORDER BY 1)
+			SELECT sales_transaction_date,
+			CASE WHEN row_number>=7 THEN sales_moving_average_7 ELSE NULL END
+AS sales_moving_average_7 
+			FROM MA_7; 
+			
+
+
+/*ACTIVITY 7*/
+
+select sales_transaction_date::DATE, ROUND(SUM(sales_amount)) as sum_of_sales
+from sales s 
+group by sales_transaction_date::DATE
+having sales_transaction_date::DATE <='2019-01-01' and 
+sales_transaction_date::DATE>= '2018-01-01';
+
+
+select min(public_transportation_pct),
+from "Public_Transport" pt ;
+
+
+SELECT (public_transportation_pct > 10) AS is_high_public_transport, count (s.customer_id) * 1.0 / COUNT (DISTINCT c.customer_id) AS sales_per_customer 
+FROM customers c
+INNER JOIN public_transportation_by_zip t ON t.zip_code = c.postal_code
+LEFT JOIN sales s ON s.customer_id = c.customer_id
+WHERE public_transportation_pct >= 0
+GROUP BY 1;
+
+
